@@ -1,38 +1,61 @@
+# AI CAR-FAULT DETECTION APP
+# Developed by Adekanye Abdulzohir 🇳🇬
+
 import streamlit as st
 import numpy as np
 import librosa
-import joblib
 import soundfile as sf
+import joblib
+import tempfile
 
-st.title("🚗 AI Car-Fault Detection from Sound")
-st.write("Upload a car sound clip (.wav) and let AI predict which part may be faulty.")
+# ---- Load your trained model (.pkl in same folder) ----
+model = joblib.load("car_fault_model.pkl")
 
-uploaded = st.file_uploader("Upload .wav file", type=["wav"])
+# ---- Fault explanation dictionary ----
+fault_tips = {
+    "engine": "Possible piston or valve issue. Check oil and compression.",
+    "brake": "Uneven friction detected. Inspect brake pads and fluid.",
+    "gearbox": "Vibration pattern indicates transmission slip. Check clutch oil.",
+    "normal": "Sound normal. No immediate fault detected.",
+}
 
-# Define car parts (for model prediction)
-parts = ["Engine", "Gearbox", "Brake", "Exhaust", "Fan Belt"]
+# ---- Page setup ----
+st.set_page_config(page_title="AI Car-Fault Detector", layout="centered")
+st.title("🚗 AI Car-Fault Detection")
+st.write("Upload or record your car sound — AI will detect possible faults.")
+st.markdown("**Created by Adekanye Abdulzohir**")
 
-if uploaded is not None:
-    # Load audio file
-    st.audio(uploaded, format="audio/wav")
+# ---- File uploader OR microphone recording ----
+uploaded_file = st.file_uploader("Upload car sound (.wav)", type=["wav"])
+recorded = st.audio_input("Or record directly below")
 
-    try:
-        # Read audio
-        y, sr = librosa.load(uploaded, sr=22050)
+if uploaded_file or recorded:
+    with st.spinner("Analyzing sound..."):
+        # choose the input source
+        if uploaded_file:
+            audio_bytes = uploaded_file.read()
+        else:
+            audio_bytes = recorded.getvalue()
 
-        # Extract MFCC features
-        mfccs = np.mean(librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20).T, axis=0).reshape(1, -1)
+        # save temporary wav
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as tmp:
+            tmp.write(audio_bytes)
+            file_path = tmp.name
 
-        # Try to load the model (if uploaded)
-        try:
-            model = joblib.load("car_fault_model.pkl")
-            pred = model.predict(mfccs)[0]
-            st.success(f"🔍 Detected faulty part → {parts[pred]}")
-        except:
-            # Dummy prediction (random for now)
-            st.warning("⚠️ No trained model found — running test simulation.")
-            pred = np.random.choice(parts)
-            st.info(f"Predicted (simulation): {pred}")
+        # extract MFCC features
+        y, sr = librosa.load(file_path, sr=None)
+        mfcc = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)
+        feature = np.mean(mfcc.T, axis=0).reshape(1, -1)
 
-    except Exception as e:
-        st.error(f"Error processing audio file: {e}")
+        # prediction
+        pred = model.predict(feature)[0]
+
+        # result display
+        st.success(f"🔍 Detected fault: **{pred.upper()}**")
+        st.info(f"💡 {fault_tips.get(pred, 'No tip available for this fault.')}")
+
+        # play back the audio
+        st.audio(audio_bytes, format="audio/wav")
+
+else:
+    st.warning("Please upload or record a sound to start.")
