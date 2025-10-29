@@ -52,23 +52,6 @@ if uploaded_file:
         # Display results
         st.success(f"✅ Detected possible fault in: **{pred_label}**")
         st.info(f"📊 Confidence: **{confidence:.2f}%**")
-        from gtts import gTTS
-import os
-import streamlit as st
-
-# Suppose your prediction result is stored in a variable called `fault_label`
-# For example:
-# fault_label = model.predict([features])[0]
-
-# Convert the diagnosis to speech
-tts = gTTS(f"The detected fault is {fault_label}")
-tts.save("diagnosis.mp3")
-
-# Play the audio in Streamlit
-audio_file = open("diagnosis.mp3", "rb")
-audio_bytes = audio_file.read()
-st.audio(audio_bytes, format="audio/mp3")
-
         # -------------------------------
         # SYSTEM STATUS DASHBOARD
         # -------------------------------
