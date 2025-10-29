@@ -3,4 +3,4 @@ librosa
 numpy
 joblib
 soundfile
-scikit-learn
+matplotlib
