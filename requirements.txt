@@ -1,9 +1,9 @@
 streamlit
 librosa
-scikit-learn
 soundfile
+scikit-learn
 joblib
 matplotlib
 gTTS
-moviepy
+moviepy==1.0.3
 numpy
