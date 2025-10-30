@@ -167,60 +167,81 @@ if uploaded_file:
 else:
     st.info("Upload a car sound (.wav, .mp3, .mp4, etc.) to start full system analysis.")    
  # -------------------------------
-# 🔧 Smart Car Component Analyzer
+# 🔧 Smart Car Component Analyzer (Real Sound-based)
 # -------------------------------
 
-import io
-import random
-from gtts import gTTS
-import tempfile
-
-# Expanded components and possible conditions
-car_components = {
-    "Engine": ["smooth", "knocking", "overheating", "idling issue"],
-    "Brake": ["firm", "soft", "squealing", "fluid low"],
-    "Clutch": ["slipping", "grinding", "responsive", "stiff"],
-    "Gear": ["changing well", "delayed shift", "noise detected"],
-    "Battery": ["charging well", "weak voltage", "corrosion issue"],
-    "Tire": ["good pressure", "low pressure", "alignment off"],
-    "Wiring": ["connection stable", "short circuit risk", "sensor fault"],
-    "Sensor": ["optimal", "faulty", "requires calibration"]
-}
-
-# If user uploaded a sound file
 if uploaded_file:
-    st.subheader("🔍 Full Car Diagnostic Report")
+    st.subheader("🔍 Full Car Diagnostic Report (Detailed Component Status)")
 
-    # Simulate sound-based diagnosis (AI model placeholder)
-    results = {}
-    for part, states in car_components.items():
-        condition = random.choice(states)
-        solution = {
-            "smooth": "Everything is working fine.",
-            "firm": "Brake system normal.",
-            "charging well": "Battery system optimal.",
-            "connection stable": "Wiring OK.",
-        }.get(condition, f"Check or service your {part.lower()} for possible issues.")
+    # Use actual sound features to infer component condition
+    feat_values = {
+        "rms": feat["rms"],
+        "zcr": feat["zcr"],
+        "spec_cent": feat["spec_cent"],
+        "spec_bw": feat["spec_bw"],
+        "tempo": feat["tempo"]
+    }
 
-        results[part] = {"Condition": condition, "Solution": solution}
+    conditions = {}
+
+    # Engine health check
+    if feat_values["rms"] > 0.04:
+        conditions["Engine"] = ("noisy or misfiring", "Check spark plugs, oil, and compression.")
+    elif feat_values["rms"] < 0.015:
+        conditions["Engine"] = ("weak or underpowered", "Inspect fuel system and air intake.")
+    else:
+        conditions["Engine"] = ("running smoothly", "No issue detected.")
+
+    # Brake check
+    if feat_values["spec_cent"] > 3000:
+        conditions["Brake"] = ("squealing or high friction noise", "Inspect brake pads and discs.")
+    else:
+        conditions["Brake"] = ("normal", "No action needed.")
+
+    # Gearbox
+    if feat_values["spec_bw"] > 2500:
+        conditions["Gearbox"] = ("rough or noisy shifting", "Check transmission oil and clutch.")
+    else:
+        conditions["Gearbox"] = ("smooth shifting", "System OK.")
+
+    # Clutch
+    if 0.02 < feat_values["rms"] < 0.03 and feat_values["spec_cent"] < 1800:
+        conditions["Clutch"] = ("possible slipping", "Check clutch plate and pedal adjustment.")
+    else:
+        conditions["Clutch"] = ("engaging properly", "No issue found.")
+
+    # Battery / electrical
+    if feat_values["rms"] < 0.006:
+        conditions["Battery"] = ("weak or low voltage signs", "Check alternator and terminals.")
+    else:
+        conditions["Battery"] = ("normal charge", "Battery system OK.")
+
+    # Suspension
+    if feat_values["spec_bw"] > 3000 and feat_values["rms"] > 0.03:
+        conditions["Suspension"] = ("vibrating or unstable", "Inspect shocks and wheel balance.")
+    else:
+        conditions["Suspension"] = ("stable", "No major vibration issues.")
 
     # Display results
-    for part, info in results.items():
+    for part, (cond, sol) in conditions.items():
         st.markdown(f"### 🚗 {part}")
-        st.write(f"**Condition:** {info['Condition'].capitalize()}")
-        st.write(f"**Suggested Fix:** {info['Solution']}")
+        st.write(f"**Condition:** {cond.capitalize()}")
+        st.write(f"**Suggested Fix:** {sol}")
         st.divider()
 
-    # Generate AI voice summary
-    summary_text = "Here is your car status summary. "
-    for part, info in results.items():
-        summary_text += f"{part}: {info['Condition']}. "
+    # Voice summary
+    voice_text = "Here is your detailed car report. "
+    for part, (cond, sol) in conditions.items():
+        voice_text += f"{part} is {cond}. {sol}. "
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio:
-        tts = gTTS(summary_text)
-        tts.save(temp_audio.name)
-        st.audio(temp_audio.name, format="audio/mp3")
+    try:
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio:
+            tts = gTTS(voice_text)
+            tts.save(temp_audio.name)
+            st.audio(temp_audio.name, format="audio/mp3")
+    except Exception as e:
+        st.error(f"Voice feedback failed: {e}")
 
-    st.success("✅ Diagnosis complete — both text and voice feedback ready.")
+    st.success("✅ Real-time diagnosis complete — based on actual sound data.")
 else:
-    st.info("Upload a car sound (.wav, .mp3, .mp4, .aac) to get full system analysis.")
+    st.info("Upload a car sound (.wav, .mp3, .mp4) to get full system analysis.")
