@@ -111,19 +111,24 @@ st.markdown("""
 """)
 import streamlit as st
 import random
-import pyttsx3
+from gtts import gTTS
+import tempfile
+import os
 
-# Initialize voice engine
-engine = pyttsx3.init()
+st.set_page_config(page_title="Car Fault AI – by Adekanye Abdulzohir", page_icon="🚗")
 
-# Extended list of car components
+st.title("🚗 Car Fault AI – by Adekanye Abdulzohir")
+st.subheader("Professional Car Fault Detection from Sound")
+st.write("Upload a car sound clip — the AI will detect the most likely faulty part. (Supports .wav, .mp3, .mp4 formats)")
+
+# Extended car components
 components = [
     "Engine", "Brake", "Suspension", "Exhaust", "Belt",
     "Transmission", "Cooling System", "Tyre/Rolling",
     "Battery", "Wiring/Electrical System"
 ]
 
-# Simulated analysis dictionary (you can later replace with ML model)
+# Tips for each system
 analysis_tips = {
     "Engine": "Engine faults can sound like knocking, rattling, or irregular revving.",
     "Brake": "Brake faults are often grinding, squealing, or scraping sounds.",
@@ -131,37 +136,35 @@ analysis_tips = {
     "Exhaust": "Exhaust leaks produce hissing, loud roaring, or popping noises.",
     "Belt": "Belt problems often sound like a high-pitched squeal or chirp.",
     "Transmission": "Transmission faults can be grinding, whining, or harsh gear shifts.",
-    "Cooling System": "Cooling system issues might cause bubbling, gurgling, or hissing.",
+    "Cooling System": "Cooling issues might cause bubbling, gurgling, or hissing.",
     "Tyre/Rolling": "Tyre or rolling sounds may indicate imbalance or bearing wear.",
-    "Battery": "Weak battery or alternator issues may cause slow cranking or clicking sounds.",
+    "Battery": "Weak battery may cause slow cranking or clicking during start.",
     "Wiring/Electrical System": "Electrical faults can produce buzzing, crackling, or shorting sounds."
 }
 
-# File uploader (WAV, MP3, MP4, etc.)
-uploaded_file = st.file_uploader("🔊 Upload Car Sound (WAV, MP3, MP4, MPEG4):", type=["wav", "mp3", "mp4", "m4a"])
+# Upload Section
+uploaded_file = st.file_uploader("🎵 Upload Car Sound (WAV, MP3, MP4):", type=["wav", "mp3", "mp4", "m4a"])
 if uploaded_file:
     st.audio(uploaded_file)
-
-    # Simulate sound classification (replace later with real model)
     detected_component = random.choice(components)
     st.success(f"✅ Detected Faulty Component: {detected_component}")
-
-    # Explanation tip
     st.info(analysis_tips[detected_component])
 
-    # Voice feedback (text-to-speech)
-    voice_message = f"The detected issue is likely with the {detected_component}. {analysis_tips[detected_component]}"
-    engine.say(voice_message)
-    engine.runAndWait()
+    # Voice output using gTTS
+    voice_text = f"The detected issue is likely with the {detected_component}. {analysis_tips[detected_component]}"
+    tts = gTTS(voice_text, lang="en")
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio:
+        tts.save(temp_audio.name)
+        st.audio(temp_audio.name, format="audio/mp3")
 
-# Database connection simulation
+# Database Simulation
 st.markdown("---")
 st.subheader("📡 Professional Sound Analysis (Auto Database)")
-st.success("✅ Connected to professional car sound database (simulated). Real database integration in progress.")
+st.success("✅ Connected to sample sound database (simulated). Real database integration coming soon.")
 
 st.markdown(
     """
-    **Developed by Adekanye Abdulzohir**  
-    _Version 2.5 — Professional Auto Diagnostic AI_
+    👨🏽‍💻 **Developed by Adekanye Abdulzohir**  
+    _Version 2.5 — Professional AI Integration_
     """
 )
