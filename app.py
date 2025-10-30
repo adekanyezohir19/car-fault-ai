@@ -166,3 +166,61 @@ if uploaded_file:
 
 else:
     st.info("Upload a car sound (.wav, .mp3, .mp4, etc.) to start full system analysis.")    
+ # -------------------------------
+# 🔧 Smart Car Component Analyzer
+# -------------------------------
+
+import io
+import random
+from gtts import gTTS
+import tempfile
+
+# Expanded components and possible conditions
+car_components = {
+    "Engine": ["smooth", "knocking", "overheating", "idling issue"],
+    "Brake": ["firm", "soft", "squealing", "fluid low"],
+    "Clutch": ["slipping", "grinding", "responsive", "stiff"],
+    "Gear": ["changing well", "delayed shift", "noise detected"],
+    "Battery": ["charging well", "weak voltage", "corrosion issue"],
+    "Tire": ["good pressure", "low pressure", "alignment off"],
+    "Wiring": ["connection stable", "short circuit risk", "sensor fault"],
+    "Sensor": ["optimal", "faulty", "requires calibration"]
+}
+
+# If user uploaded a sound file
+if uploaded_file:
+    st.subheader("🔍 Full Car Diagnostic Report")
+
+    # Simulate sound-based diagnosis (AI model placeholder)
+    results = {}
+    for part, states in car_components.items():
+        condition = random.choice(states)
+        solution = {
+            "smooth": "Everything is working fine.",
+            "firm": "Brake system normal.",
+            "charging well": "Battery system optimal.",
+            "connection stable": "Wiring OK.",
+        }.get(condition, f"Check or service your {part.lower()} for possible issues.")
+
+        results[part] = {"Condition": condition, "Solution": solution}
+
+    # Display results
+    for part, info in results.items():
+        st.markdown(f"### 🚗 {part}")
+        st.write(f"**Condition:** {info['Condition'].capitalize()}")
+        st.write(f"**Suggested Fix:** {info['Solution']}")
+        st.divider()
+
+    # Generate AI voice summary
+    summary_text = "Here is your car status summary. "
+    for part, info in results.items():
+        summary_text += f"{part}: {info['Condition']}. "
+
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio:
+        tts = gTTS(summary_text)
+        tts.save(temp_audio.name)
+        st.audio(temp_audio.name, format="audio/mp3")
+
+    st.success("✅ Diagnosis complete — both text and voice feedback ready.")
+else:
+    st.info("Upload a car sound (.wav, .mp3, .mp4, .aac) to get full system analysis.")
