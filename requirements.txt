@@ -1,6 +1,7 @@
 streamlit
 librosa
-numpy
-joblib
+scikit-learn
 soundfile
+joblib
 matplotlib
+pyttsx3
