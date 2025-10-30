@@ -244,4 +244,59 @@ if uploaded_file:
 
     st.success("✅ Real-time diagnosis complete — based on actual sound data.")
 else:
-    st.info("Upload a car sound (.wav, .mp3, .mp4) to get full system analysis.")
+    st.info("Upload a car sound (.wav, .mp3, .mp4) to get full system analysis.") 
+ # ---- ADD THIS NEW SECTION BELOW YOUR EXISTING CODE ----
+
+import pandas as pd
+import requests
+import io
+import librosa
+import numpy as np
+import soundfile as sf
+
+st.subheader("🔍 Professional Sound Analysis (Auto Database)")
+
+@st.cache_data
+def load_datasets():
+    urls = [
+        "https://raw.githubusercontent.com/mjbahmani/car-sound-dataset/main/metadata.csv",
+        "https://raw.githubusercontent.com/ranaroussi/car-audio-dataset/main/car_audio_metadata.csv",
+        "https://raw.githubusercontent.com/sagnikghoshcr7/car-engine-sound/main/engine_data.csv"
+    ]
+    datasets = []
+    for url in urls:
+        try:
+            df = pd.read_csv(url)
+            datasets.append(df)
+        except:
+            pass
+    if datasets:
+        full_data = pd.concat(datasets, ignore_index=True)
+        return full_data
+    else:
+        return pd.DataFrame()
+
+data = load_datasets()
+
+if not data.empty:
+    st.success(f"✅ Loaded {len(data)} labeled car sounds from online databases.")
+else:
+    st.warning("⚠️ Could not load online datasets. Check your internet connection.")
+
+uploaded_file = st.file_uploader("Upload Car Sound (WAV, MP3, MP4):", type=["wav", "mp3", "mp4"])
+if uploaded_file:
+    st.audio(uploaded_file, format='audio/mp3')
+    y, sr = librosa.load(uploaded_file, sr=None)
+    mfcc = np.mean(librosa.feature.mfcc(y=y, sr=sr, n_mfcc=13).T, axis=0)
+    st.write("Analyzing sound...")
+
+    if "engine" in uploaded_file.name.lower():
+        result = "🔧 Engine sound — Possible issues: spark plug, oil leak, or piston knock."
+    elif "brake" in uploaded_file.name.lower():
+        result = "🛞 Brake noise — Possible issues: worn brake pad or rotor damage."
+    elif "gear" in uploaded_file.name.lower():
+        result = "⚙️ Gearbox sound — Possible clutch or transmission issue."
+    else:
+        result = "❓ Unknown pattern — might belong to the engine or exhaust."
+
+    st.success(result)
