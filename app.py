@@ -17,7 +17,9 @@ st.set_page_config(page_title="Smart Vehicle Diagnostic by Adekanye", page_icon=
 st.image("military_car.jpg", use_container_width=True)
 st.title("🚗 Smart Vehicle Diagnostic System")
 st.caption("Developed by **Adekanye Abdulzohir** — Nigerian Army Engineering Unit")
-st.write("Upload audio or video (wav, mp3, mp4). The app analyzes sound and returns a full component-by-component status report (text + voice).")
+st.write("Upload a car sound clip or video",
+    type=["wav", "mp3", "mp4", "m4a", "ogg", "flac"],
+    help="You can upload car sound or short video clip for full AI analysis.")
 st.markdown("---")
 
 # Try to load a trained model if you later add one (optional)
