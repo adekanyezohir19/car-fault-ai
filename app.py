@@ -1,130 +1,86 @@
 import streamlit as st
 import librosa
+import streamlit as st
 import numpy as np
+import librosa
 import joblib
 import soundfile as sf
+import pyttsx3
 import matplotlib.pyplot as plt
 
-# -------------------------------
-# PAGE SETTINGS
-# -------------------------------
-st.set_page_config(page_title="AI Car Fault Detection", page_icon="🚗", layout="centered")
+# Load trained model
+model = joblib.load("car_fault_model.pkl")
 
-# -------------------------------
-# HEADER WITH IMAGE
-# -------------------------------
+# Initialize text-to-speech engine
+engine = pyttsx3.init()
+
+# More realistic car component explanations
+descriptions = {
+    "Engine": """The engine is the heart of your car. It converts fuel into power that drives your vehicle forward.
+Common problems include knocking sounds, oil leaks, overheating, or loss of power.
+⚠️ Possible causes: low oil, worn pistons, or poor fuel quality.
+🧰 Fix: Check oil level, radiator coolant, and spark plugs. If noise continues, visit a mechanic immediately.""",
+
+    "Brake": """The braking system ensures your car can stop safely.
+Squeaking or grinding noises usually mean your brake pads are worn or your rotors are damaged.
+⚠️ Possible causes: thin brake pads, low brake fluid, or debris between pads.
+🧰 Fix: Replace brake pads, refill brake fluid, and have the brake lines checked.""",
+
+    "Gearbox": """The gearbox transfers power from the engine to the wheels.
+If you hear grinding noises or experience hard shifting, it may indicate a gearbox issue.
+⚠️ Possible causes: low transmission fluid, worn gears, or clutch misalignment.
+🧰 Fix: Check and top up gearbox oil. Visit a professional if shifting remains rough.""",
+
+    "Clutch": """The clutch connects and disconnects the engine and gearbox.
+A burning smell or slipping during gear changes often signals clutch wear.
+⚠️ Possible causes: worn clutch plate, weak pressure plate, or hydraulic leak.
+🧰 Fix: Avoid holding the clutch pedal halfway. Replace clutch plate if slipping continues.""",
+
+    "Exhaust": """The exhaust system removes gases from the engine and reduces noise.
+Loud exhausts or smoke can mean leaks or blockages.
+⚠️ Possible causes: damaged muffler, cracked exhaust pipe, or dirty catalytic converter.
+🧰 Fix: Inspect for leaks under the car. Replace rusted parts to avoid engine strain.""",
+
+    "Fan Belt": """The fan belt powers key parts like the alternator, cooling fan, and water pump.
+If you hear squealing, the belt may be loose or cracked.
+⚠️ Possible causes: worn belt, bad pulley, or misaligned tensioner.
+🧰 Fix: Check belt tension and condition. Replace if worn or frayed.""",
+}
+
+# Streamlit UI
+st.set_page_config(page_title="AI Car Fault Detector", page_icon="🚗", layout="centered")
+st.title("🚗 AI Car Fault Detection System")
 st.image("military_car.jpg", use_container_width=True)
-st.title("🚘 AI Car Fault Detection & Maintenance Assistant")
-st.write("Developed by **Adekanye Abdulzohir** 🇳🇬")
-st.markdown("""
-This AI system uses **sound analysis** to detect vehicle faults and suggest **maintenance actions**.  
-Upload a short car sound clip, and the AI will analyze, visualize, and recommend solutions.  
-""")
+st.write("Upload a car sound (.wav) to detect faults in engine, brakes, clutch, gearbox, or other parts.")
 
-# -------------------------------
-# LOAD MODEL
-# -------------------------------
-@st.cache_resource
-def load_model():
-    return joblib.load("car_fault_model.pkl")
+# File uploader
+uploaded_file = st.file_uploader("🎵 Upload Car Sound File (.wav)", type=["wav"])
 
-model = load_model()
-
-# -------------------------------
-# UPLOAD AUDIO SECTION
-# -------------------------------
-uploaded_file = st.file_uploader("🎧 Upload a car sound (.wav format)", type=["wav"])
-
-if uploaded_file:
+if uploaded_file is not None:
+    # Read the uploaded audio
+    data, sr = sf.read(uploaded_file)
     st.audio(uploaded_file, format="audio/wav")
-    
-    try:
-        # Load and process audio
-        y, sr = sf.read(uploaded_file)
-        mfcc = np.mean(librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20).T, axis=0)
-        mfcc = mfcc.reshape(1, -1)
-        
-        # Predict and get confidence
-        pred_proba = model.predict_proba(mfcc)
-        pred_label = model.classes_[np.argmax(pred_proba)]
-        confidence = np.max(pred_proba) * 100
 
-        # Display results
-        st.success(f"✅ Detected possible fault in: **{pred_label}**")
-        st.info(f"📊 Confidence: **{confidence:.2f}%**")
-        # -------------------------------
-        # SYSTEM STATUS DASHBOARD
-        # -------------------------------
-        st.markdown("### 📈 System Status Dashboard")
+    # Extract features
+    mfcc = np.mean(librosa.feature.mfcc(y=data, sr=sr, n_mfcc=20).T, axis=0).reshape(1, -1)
 
-        # Waveform
-        st.subheader("Sound Waveform")
-        fig, ax = plt.subplots()
-        ax.plot(y)
-        ax.set_xlabel("Time")
-        ax.set_ylabel("Amplitude")
-        st.pyplot(fig)
+    # Predict the fault
+    pred = model.predict(mfcc)[0]
+    info = descriptions.get(pred, "No detailed information available for this component.")
 
-        # MFCC visualization
-        st.subheader("MFCC Frequency Heatmap")
-        mfcc_data = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20)
-        fig2, ax2 = plt.subplots()
-        img = librosa.display.specshow(mfcc_data, x_axis='time', ax=ax2)
-        fig2.colorbar(img, ax=ax2)
-        st.pyplot(fig2)
+    # Display text feedback
+    st.subheader(f"🧠 Detected Fault: {pred}")
+    st.write(info)
 
-        # -------------------------------
-        # MAINTENANCE ASSISTANT PANEL
-        # -------------------------------
-        st.markdown("### 🧠 Maintenance Assistant AI")
+    # Speak it out loud
+    engine.say(f"The detected fault is {pred}. {info}")
+    engine.runAndWait()
 
-        maintenance_tips = {
-            "engine": [
-                "Check oil and coolant levels immediately.",
-                "Inspect spark plugs for carbon buildup.",
-                "Avoid long idling sessions; it causes overheating."
-            ],
-            "gearbox": [
-                "Inspect transmission fluid for color and level.",
-                "Avoid aggressive shifting; it wears out gear teeth.",
-                "Schedule a mechanical inspection if vibration persists."
-            ],
-            "brakes": [
-                "Check brake pads and fluid levels.",
-                "Listen for grinding or squealing sounds.",
-                "Do not drive if the brake pedal feels soft or spongy."
-            ],
-            "exhaust": [
-                "Inspect exhaust pipe for leaks or rust.",
-                "Clean catalytic converter if blocked.",
-                "Avoid engine revving when stationary."
-            ]
-        }
-
-        # Match fault label to tips
-        tips = maintenance_tips.get(pred_label.lower(), [
-            "Perform general inspection and diagnostics.",
-            "Ensure regular oil changes and filter replacements."
-        ])
-
-        st.write("🛠️ Recommended Actions:")
-        for tip in tips:
-            st.markdown(f"- {tip}")
-
-        # Health indicator
-        st.markdown("### ⚙️ System Health Status")
-        if confidence > 85:
-            st.success("🟢 Status: Operational — Minimal risk detected.")
-        elif confidence > 60:
-            st.warning("🟡 Status: Warning — Possible moderate issue.")
-        else:
-            st.error("🔴 Status: Critical — Immediate inspection advised!")
-
-    except Exception as e:
-        st.error(f"⚠️ Error processing file: {e}")
-
-# -------------------------------
-# FOOTER
-# -------------------------------
-st.markdown("---")
-st.caption("Made with ❤️ by Adekanye Abdulzohir — Nigeria Army Engineering Unit AI Project")
+    # Visualize sound data
+    st.write("🎶 Sound Analysis (MFCC Feature Map)")
+    plt.figure(figsize=(8, 4))
+    plt.imshow(librosa.feature.mfcc(y=data, sr=sr, n_mfcc=20), cmap="plasma", aspect="auto")
+    plt.title("MFCC Visualization")
+    plt.xlabel("Time Frames")
+    plt.ylabel("MFCC Coefficients")
+    st.pyplot(plt)
