@@ -1,20 +1,16 @@
 import streamlit as st
-import librosa
-import streamlit as st
 import numpy as np
 import librosa
 import joblib
 import soundfile as sf
-import pyttsx3
+from gtts import gTTS
+import os
 import matplotlib.pyplot as plt
 
 # Load trained model
 model = joblib.load("car_fault_model.pkl")
 
-# Initialize text-to-speech engine
-engine = pyttsx3.init()
-
-# More realistic car component explanations
+# Component descriptions
 descriptions = {
     "Engine": """The engine is the heart of your car. It converts fuel into power that drives your vehicle forward.
 Common problems include knocking sounds, oil leaks, overheating, or loss of power.
@@ -53,30 +49,32 @@ st.title("🚗 AI Car Fault Detection System")
 st.image("military_car.jpg", use_container_width=True)
 st.write("Upload a car sound (.wav) to detect faults in engine, brakes, clutch, gearbox, or other parts.")
 
-# File uploader
+# Upload file
 uploaded_file = st.file_uploader("🎵 Upload Car Sound File (.wav)", type=["wav"])
 
 if uploaded_file is not None:
-    # Read the uploaded audio
     data, sr = sf.read(uploaded_file)
     st.audio(uploaded_file, format="audio/wav")
 
-    # Extract features
+    # Extract MFCC
     mfcc = np.mean(librosa.feature.mfcc(y=data, sr=sr, n_mfcc=20).T, axis=0).reshape(1, -1)
 
-    # Predict the fault
+    # Predict fault
     pred = model.predict(mfcc)[0]
     info = descriptions.get(pred, "No detailed information available for this component.")
 
-    # Display text feedback
+    # Text feedback
     st.subheader(f"🧠 Detected Fault: {pred}")
     st.write(info)
 
-    # Speak it out loud
-    engine.say(f"The detected fault is {pred}. {info}")
-    engine.runAndWait()
+    # Voice feedback using gTTS
+    tts_text = f"The detected fault is {pred}. {info}"
+    tts = gTTS(tts_text)
+    tts.save("voice.mp3")
+    audio_file = open("voice.mp3", "rb")
+    st.audio(audio_file.read(), format="audio/mp3")
 
-    # Visualize sound data
+    # Visualize sound
     st.write("🎶 Sound Analysis (MFCC Feature Map)")
     plt.figure(figsize=(8, 4))
     plt.imshow(librosa.feature.mfcc(y=data, sr=sr, n_mfcc=20), cmap="plasma", aspect="auto")
