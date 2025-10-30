@@ -4,4 +4,4 @@ scikit-learn
 soundfile
 joblib
 matplotlib
-pyttsx3
+gTTS
