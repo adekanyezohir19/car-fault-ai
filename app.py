@@ -1,8 +1,7 @@
-os.system("pip install librosa soundfile numpy pandas requests gtts torch transformers scikit-learn beautifulsoup4 lxml")
 import os
 import streamlit as st
 
-# Auto install missing libraries
+# ✅ Fix: Import os first, then install missing libraries
 os.system("pip install librosa soundfile numpy pandas requests gtts torch transformers scikit-learn beautifulsoup4 lxml sounddevice scipy")
 
 import librosa
