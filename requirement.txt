@@ -8,3 +8,7 @@ gtts
 torch
 transformers
 scikit-learn
+beautifulsoup4
+lxml
+sounddevice
+scipy
