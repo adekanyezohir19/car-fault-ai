@@ -1,0 +1,14 @@
+streamlit
+librosa
+soundfile
+numpy
+pandas
+requests
+gtts
+torch
+transformers
+scikit-learn
+beautifulsoup4
+lxml
+sounddevice
+scipy
