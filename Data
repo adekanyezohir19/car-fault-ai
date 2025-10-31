@@ -1,0 +1,9 @@
+data/
+ ├── engine/engine_1.wav
+ ├── brake/brake_1.wav
+ ├── gearbox/gearbox_1.wav
+ ├── exhaust/exhaust_1.wav
+ ├── radiator/radiator_1.wav
+ ├── suspension/suspension_1.wav
+ ├── battery/battery_1.wav
+ └── wiring/wiring_1.wav
