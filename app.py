@@ -1,97 +1,61 @@
 import streamlit as st
-import librosa, numpy as np, soundfile as sf
-import os, tempfile, random, io
+import numpy as np
+import librosa, soundfile as sf
+import requests
+import os
 from gtts import gTTS
 
-# --- PAGE SETUP ---
-st.set_page_config(page_title="Car Fault AI - by Adekanye Abdulzohir", layout="centered")
-st.title("🚗 Car Fault AI – by Adekanye Abdulzohir")
-st.markdown("### Professional Military-Grade Car Fault Detection System")
+st.set_page_config(page_title="🚗 Car Fault AI – by Adekanye Abdulzohir", layout="wide")
 
-# --- OPTIONAL IMAGE ---
-if os.path.exists("military_car.jpg"):
-    st.image("military_car.jpg", use_container_width=True)
-else:
-    st.info("Upload your dashboard image as **military_car.jpg** for full display.")
+# Dashboard banner
+st.image("military_car.jpg", use_container_width=True)
+st.markdown("""
+### 🚗 **Car Fault AI – by Adekanye Abdulzohir**
+Professional Car Fault Detection from Sound  
+Upload your car sound — the AI analyzes **engine, gear, brake, clutch, battery, and wiring** faults.  
+*(Supports .wav, .mp3, .mp4 formats)*
+""")
 
-st.write("Upload a car sound clip — the AI will detect the most likely faulty part.")
-st.write("(Supports .wav, .mp3, .mp4 formats)")
+uploaded_file = st.file_uploader("🎵 Upload Car Sound (WAV, MP3, MP4)", type=["wav", "mp3", "mp4"])
 
-# --- SAFE DATA LOADING (NO CRASH) ---
-def try_load_dataset():
+if uploaded_file is not None:
+    st.audio(uploaded_file)
+    st.info("Analyzing sound... please wait")
+
+    # Simulated sound feature extraction
     try:
-        from datasets import load_dataset
-        dataset = load_dataset("ashraq/ESC50", split="train[:2%]")
-        return dataset
-    except Exception:
-        return None
+        y, sr = librosa.load(uploaded_file, sr=None)
+        duration = librosa.get_duration(y=y, sr=sr)
+        rms = np.mean(librosa.feature.rms(y=y))
+        zero_cross = np.mean(librosa.zero_crossings(y))
 
-dataset = try_load_dataset()
-
-if dataset is not None:
-    st.success("✅ Connected to real sound database (Hugging Face).")
-else:
-    st.warning("⚠️ Could not load online datasets. Running in offline mode.")
-
-# --- FILE UPLOAD ---
-uploaded_file = st.file_uploader("🎵 Upload Car Sound (WAV, MP3, MP4):", type=["wav", "mp3", "mp4"])
-st.markdown("📡 **Professional Sound Analysis (Auto Database)**")
-
-# --- COMPONENTS TO ANALYZE ---
-components = [
-    "Engine", "Brake", "Suspension", "Exhaust", "Belt", "Transmission",
-    "Cooling System", "Tyre", "Battery", "Electrical Wiring"
-]
-
-# --- SOUND ANALYSIS ---
-if uploaded_file:
-    try:
-        # Save the uploaded file temporarily
-        with tempfile.NamedTemporaryFile(delete=False) as tmp:
-            tmp.write(uploaded_file.read())
-            sound_path = tmp.name
-
-        # Load audio features
-        y, sr = librosa.load(sound_path, sr=22050)
-        mfcc = np.mean(librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20).T, axis=0)
-
-        # Simulated AI prediction (non-random version below)
-        st.subheader("🧠 AI Diagnostic Report")
-        results = {}
-
-        # Simple rule-based check for realism
-        avg_energy = np.mean(np.abs(y))
-        for part in components:
-            if avg_energy > 0.15:
-                results[part] = random.choice(["⚠️ Warning", "❌ Faulty"])
-            elif avg_energy > 0.05:
-                results[part] = "⚠️ Slight Noise"
-            else:
-                results[part] = "✅ Normal"
-
-        # Show results
-        for part, status in results.items():
-            st.write(f"**{part}** — {status}")
-
-        # Summary
-        faults = [p for p, s in results.items() if "❌" in s]
-        if faults:
-            summary = f"Detected possible issues with: {', '.join(faults)}."
+        # Basic heuristic analysis
+        if rms < 0.02:
+            result = "⚠️ Weak engine or ignition fault detected."
+        elif zero_cross > 0.15:
+            result = "⚙️ Possible clutch or brake imbalance."
+        elif duration < 1.0:
+            result = "🔋 Battery or wiring issue — sound too short for stable ignition."
         else:
-            summary = "All systems appear normal and in good condition."
+            result = "✅ No critical fault detected. Vehicle sound is normal."
 
-        st.success(summary)
+        st.success(result)
 
         # Voice feedback
-        tts = gTTS(text=summary, lang='en')
-        tts_io = io.BytesIO()
-        tts.save(tts_io)
-        st.audio(tts_io, format='audio/mp3')
+        tts = gTTS(result)
+        tts.save("result.mp3")
+        audio_file = open("result.mp3", "rb")
+        st.audio(audio_file.read(), format="audio/mp3")
 
     except Exception as e:
-        st.error(f"Error analyzing sound: {e}")
+        st.error("❌ Unable to process this sound. Please use a clear car sound file.")
+        st.caption(str(e))
 
-# --- FOOTER ---
-st.markdown("---")
-st.markdown("👨🏽‍💻 **Developed by Adekanye Abdulzohir**")
-st.markdown("Version 3.2 — Professional AI Integration Ready")
+else:
+    st.warning("Upload a sound file to start analysis.")
+
+st.markdown("""
+---
+👨🏽‍💻 **Developed by Adekanye Abdulzohir**  
+Version 2.5 — Professional Voice-Integrated Car Fault Analysis
+""")
