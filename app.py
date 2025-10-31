@@ -1,61 +1,68 @@
 import streamlit as st
 import numpy as np
-import librosa, soundfile as sf
-import requests
-import os
+import soundfile as sf
+import io, os, requests
 from gtts import gTTS
+from pydub import AudioSegment
 
 st.set_page_config(page_title="🚗 Car Fault AI – by Adekanye Abdulzohir", layout="wide")
 
-# Dashboard banner
+# --- Dashboard ---
 st.image("military_car.jpg", use_container_width=True)
 st.markdown("""
 ### 🚗 **Car Fault AI – by Adekanye Abdulzohir**
-Professional Car Fault Detection from Sound  
-Upload your car sound — the AI analyzes **engine, gear, brake, clutch, battery, and wiring** faults.  
-*(Supports .wav, .mp3, .mp4 formats)*
+Upload your car sound — AI analyzes **engine, gear, brake, clutch, battery, and wiring**.
+(Supports .wav, .mp3, .mp4 formats)
 """)
 
-uploaded_file = st.file_uploader("🎵 Upload Car Sound (WAV, MP3, MP4)", type=["wav", "mp3", "mp4"])
+uploaded_file = st.file_uploader("🎵 Upload Car Sound", type=["wav", "mp3", "mp4"])
 
 if uploaded_file is not None:
-    st.audio(uploaded_file)
-    st.info("Analyzing sound... please wait")
+    st.audio(uploaded_file, format="audio/mp3")
+    st.info("Analyzing sound... please wait ⏳")
 
-    # Simulated sound feature extraction
     try:
-        y, sr = librosa.load(uploaded_file, sr=None)
-        duration = librosa.get_duration(y=y, sr=sr)
-        rms = np.mean(librosa.feature.rms(y=y))
-        zero_cross = np.mean(librosa.zero_crossings(y))
-
-        # Basic heuristic analysis
-        if rms < 0.02:
-            result = "⚠️ Weak engine or ignition fault detected."
-        elif zero_cross > 0.15:
-            result = "⚙️ Possible clutch or brake imbalance."
-        elif duration < 1.0:
-            result = "🔋 Battery or wiring issue — sound too short for stable ignition."
+        # Convert to wav for processing
+        if uploaded_file.name.endswith(".mp3"):
+            sound = AudioSegment.from_mp3(uploaded_file)
+            buffer = io.BytesIO()
+            sound.export(buffer, format="wav")
+            buffer.seek(0)
+            data, sr = sf.read(buffer)
         else:
-            result = "✅ No critical fault detected. Vehicle sound is normal."
+            data, sr = sf.read(uploaded_file)
 
+        duration = len(data) / sr
+        avg_amplitude = np.mean(np.abs(data))
+
+        # --- Simple AI logic ---
+        if avg_amplitude < 0.02:
+            result = "⚠️ Weak engine or ignition problem."
+        elif duration < 1:
+            result = "🔋 Battery or wiring issue."
+        elif avg_amplitude > 0.1:
+            result = "⚙️ Possible brake or clutch imbalance."
+        else:
+            result = "✅ Sound is normal. No fault detected."
+
+        # Display result
         st.success(result)
 
         # Voice feedback
         tts = gTTS(result)
         tts.save("result.mp3")
-        audio_file = open("result.mp3", "rb")
-        st.audio(audio_file.read(), format="audio/mp3")
+        with open("result.mp3", "rb") as f:
+            st.audio(f.read(), format="audio/mp3")
 
     except Exception as e:
-        st.error("❌ Unable to process this sound. Please use a clear car sound file.")
+        st.error("❌ Error analyzing file.")
         st.caption(str(e))
 
 else:
-    st.warning("Upload a sound file to start analysis.")
+    st.warning("Upload a sound file to start.")
 
 st.markdown("""
 ---
 👨🏽‍💻 **Developed by Adekanye Abdulzohir**  
-Version 2.5 — Professional Voice-Integrated Car Fault Analysis
+Version 3.0 — Professional Voice-Integrated Car Fault AI
 """)
