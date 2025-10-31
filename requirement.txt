@@ -1,6 +1,10 @@
 streamlit
-numpy
+librosa
 soundfile
-gtts
-pydub
+numpy
+pandas
 requests
+gtts
+torch
+transformers
+scikit-learn
