@@ -1,9 +1,0 @@
-streamlit
-librosa
-numpy
-soundfile
-pandas
-requests
-transformers
-torch
-gtts
