@@ -1,91 +1,100 @@
 import streamlit as st
-import random
+import numpy as np
+import librosa
+import joblib
 from gtts import gTTS
-import tempfile
+import os
+from tempfile import NamedTemporaryFile
+import base64
+import matplotlib.pyplot as plt
 
-# -----------------------------
-# APP CONFIGURATION
-# -----------------------------
-st.set_page_config(page_title="Car Fault AI – by Adekanye Abdulzohir", page_icon="🚗")
-st.title("🚗 Car Fault AI – by Adekanye Abdulzohir")
-st.subheader("Professional Car Fault Detection from Sound")
-st.write("Upload a car sound clip — the AI will detect the most likely faulty part. (Supports .wav, .mp3, .mp4 formats)")
+# =============== PAGE CONFIG ===================
+st.set_page_config(page_title="Car Fault AI - Military Edition", layout="wide")
 
-# -----------------------------
-# COMPONENT DATABASE
-# -----------------------------
+# =============== HEADER ========================
+st.markdown("""
+# 🚗 **Car Fault AI – Military Edition**
+### Developed by *Adekanye Abdulzohir*
+#### Professional Sound-Based Vehicle Fault Detection System
+""")
+
+st.markdown("---")
+
+# =============== IMAGE / DASHBOARD UI ===========
+st.image("military_car.jpg", use_container_width=True, caption="Military Vehicle Diagnostic Dashboard")
+
+# Load your trained model
+model_path = "car_fault_model.pkl"
+if not os.path.exists(model_path):
+    st.error("⚠️ Model file not found! Please upload or retrain first.")
+else:
+    model = joblib.load(model_path)
+
+# List of components to analyze
 components = [
-    "Engine", "Gearbox", "Brake", "Clutch", "Suspension", "Exhaust", "Belt",
-    "Transmission", "Cooling System", "Tyre/Rolling", "Battery", "Wiring/Electrical System"
+    "Engine", "Brake", "Suspension", "Exhaust",
+    "Belt", "Transmission", "Cooling System",
+    "Tyre/Rolling", "Battery", "Wiring/Electrical System"
 ]
 
-# Analysis explanations for each
-analysis_tips = {
-    "Engine": "Engine faults often sound like knocking, rattling, or rough idling. Check oil and spark plugs.",
-    "Gearbox": "Gearbox issues cause grinding or whining during shifting. Check fluid level or worn gears.",
-    "Brake": "Brake faults cause squealing, scraping, or grinding. Inspect pads, discs, and brake fluid.",
-    "Clutch": "Clutch wear sounds like slipping or rattling. May require adjustment or replacement.",
-    "Suspension": "Clunking or knocking over bumps indicates suspension or shock absorber problems.",
-    "Exhaust": "Hissing or loud roaring means a possible exhaust leak or damaged silencer.",
-    "Belt": "A high-pitched squeal on startup indicates worn or loose drive belts.",
-    "Transmission": "Jerking or delay during gear changes points to low fluid or transmission wear.",
-    "Cooling System": "Bubbling or hissing may mean coolant leak or overheating radiator.",
-    "Tyre/Rolling": "Vibration or roaring at speed may suggest unbalanced tyres or worn bearings.",
-    "Battery": "Clicking sound when starting could mean low charge or corroded terminals.",
-    "Wiring/Electrical System": "Buzzing or crackling noises can mean short circuits or loose wiring."
-}
-
-# -----------------------------
-# UPLOAD SECTION
-# -----------------------------
-uploaded_file = st.file_uploader("🎵 Upload Car Sound (WAV, MP3, MP4):", type=["wav", "mp3", "mp4", "m4a"])
-
+# =============== FILE UPLOAD ===================
+uploaded_file = st.file_uploader("🎵 Upload Car Sound (WAV, MP3, MP4):", type=["wav", "mp3", "mp4"])
 if uploaded_file:
-    st.audio(uploaded_file)
-    st.success("✅ File uploaded successfully. Click 'Analyze Sound' to begin.")
+    st.success("✅ File received! Processing sound...")
+    
+    # Load and analyze audio
+    try:
+        y, sr = librosa.load(uploaded_file, sr=None)
+        st.audio(uploaded_file)
 
-    # Initialize state
-    if "detected_component" not in st.session_state:
-        st.session_state.detected_component = None
+        # Visual waveform
+        fig, ax = plt.subplots()
+        librosa.display.waveshow(y, sr=sr, color='green')
+        plt.title("Sound Waveform")
+        st.pyplot(fig)
 
-    # Analyze button
-    if st.button("🔍 Analyze Sound"):
-        detected_component = random.choice(components)
-        st.session_state.detected_component = detected_component
-        st.success(f"✅ Detected Faulty Component: **{detected_component}**")
-        st.info(analysis_tips[detected_component])
+        # Extract MFCC features
+        mfcc = np.mean(librosa.feature.mfcc(y=y, sr=sr, n_mfcc=20).T, axis=0)
+        mfcc = mfcc.reshape(1, -1)
 
-        # Generate voice feedback
-        voice_text = f"The detected issue is likely with the {detected_component}. {analysis_tips[detected_component]}"
-        tts = gTTS(voice_text, lang="en")
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio:
-            tts.save(temp_audio.name)
-            st.audio(temp_audio.name, format="audio/mp3")
+        # Predict
+        prediction = model.predict(mfcc)[0]
+        probabilities = model.predict_proba(mfcc)[0]
+        confidence = np.max(probabilities) * 100
 
-    # Reanalyze button
-    if st.button("🔁 Reanalyze Sound"):
-        new_component = random.choice(components)
-        st.session_state.detected_component = new_component
-        st.warning(f"Reanalysis result: {new_component}")
-        st.info(analysis_tips[new_component])
+        # Show Results
+        st.markdown(f"### 🧠 **Detected Faulty Component:** `{prediction}`")
+        st.progress(int(confidence))
+        st.write(f"Confidence: **{confidence:.2f}%**")
 
-        # Generate updated voice feedback
-        voice_text = f"After reanalysis, the issue might be with the {new_component}. {analysis_tips[new_component]}"
-        tts = gTTS(voice_text, lang="en")
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_audio:
-            tts.save(temp_audio.name)
-            st.audio(temp_audio.name, format="audio/mp3")
+        # Voice Feedback (using Google TTS)
+        explanation = f"The detected faulty component is {prediction}. Confidence level {int(confidence)} percent."
+        tts = gTTS(text=explanation, lang='en')
+        with NamedTemporaryFile(delete=False, suffix=".mp3") as tmpfile:
+            tts.save(tmpfile.name)
+            audio_bytes = open(tmpfile.name, "rb").read()
+            b64 = base64.b64encode(audio_bytes).decode()
+            audio_html = f'<audio controls autoplay src="data:audio/mp3;base64,{b64}"></audio>'
+            st.markdown(audio_html, unsafe_allow_html=True)
 
-# -----------------------------
-# DATABASE & FOOTER
-# -----------------------------
+        # Component explanation
+        fault_descriptions = {
+            "Engine": "Engine knock, misfire or unusual vibration indicates worn pistons or valves.",
+            "Brake": "Squealing or grinding sound suggests worn brake pads or low brake fluid.",
+            "Suspension": "Rattling sound when driving over bumps signals shock absorber wear.",
+            "Exhaust": "Loud or popping noise may mean exhaust leak or damaged muffler.",
+            "Belt": "Squealing noise at startup often means worn or loose serpentine belt.",
+            "Transmission": "Whining or gear slipping sound indicates transmission fluid issue.",
+            "Cooling System": "Boiling or hissing noise means coolant leak or radiator fan fault.",
+            "Tyre/Rolling": "Thumping noise or uneven sound could be tire imbalance or damage.",
+            "Battery": "Clicking sound when starting means weak battery or poor connection.",
+            "Wiring/Electrical System": "Buzzing or flickering lights show possible short circuit or damaged wire."
+        }
+
+        st.info(f"🧾 {fault_descriptions.get(prediction, 'No data available for this component.')}")
+        
+    except Exception as e:
+        st.error(f"❌ Error analyzing sound: {e}")
+
 st.markdown("---")
-st.subheader("📡 Professional Sound Analysis (Auto Database)")
-st.success("✅ Connected to sample sound database (simulated). Real-time AI sound database integration coming soon.")
-
-st.markdown(
-    """
-    👨🏽‍💻 **Developed by Adekanye Abdulzohir**  
-    _Version 3.0 — Fully Professional AI + Voice Integration_
-    """
-    )
+st.markdown("### 👨🏽‍💻 Developed by **Adekanye Abdulzohir** | Version 3.0 Professional Military Dashboard")
