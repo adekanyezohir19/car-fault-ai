@@ -1,10 +1,9 @@
 streamlit
-soundfile
 librosa
 numpy
+soundfile
 pandas
 requests
-torch
 transformers
-datasets
+torch
 gtts
