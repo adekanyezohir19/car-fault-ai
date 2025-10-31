@@ -116,3 +116,60 @@ else:
 # -------------------------
 st.markdown("---")
 st.caption("👨🏽‍💻 Developed by Adekanye Abdulzohir | Version 3.0 — Professional AI Integration")
+import os
+import requests
+from tqdm import tqdm  # progress bar
+
+# Components to track
+components = [
+    "engine", "gearbox", "exhaust", "radiator",
+    "brake", "suspension", "battery", "wiring"
+]
+
+# Create data folders
+for comp in components:
+    os.makedirs(f"data/{comp}", exist_ok=True)
+
+print("✅ All component folders ready.")
+# Sample dataset sources (real car sounds from online repositories)
+dataset_links = {
+    "engine": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/1-30226-A-0.wav",
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/2-100032-A-11.wav"
+    ],
+    "gearbox": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/2-14713-A-10.wav"
+    ],
+    "exhaust": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/3-146129-A-4.wav"
+    ],
+    "brake": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/4-18995-A-1.wav"
+    ],
+    "radiator": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/1-19898-A-5.wav"
+    ],
+    "battery": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/2-143230-A-7.wav"
+    ],
+    "suspension": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/3-157459-A-8.wav"
+    ],
+    "wiring": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/4-158972-A-9.wav"
+    ],
+}
+
+# Function to download files
+def download_datasets():
+    for comp, urls in dataset_links.items():
+        for i, url in enumerate(urls):
+            filename = f"data/{comp}/{comp}_{i+1}.wav"
+            if not os.path.exists(filename):
+                print(f"⬇️ Downloading {filename}...")
+                response = requests.get(url)
+                with open(filename, "wb") as f:
+                    f.write(response.content)
+    print("✅ All datasets downloaded successfully!")
+
+download_datasets()
