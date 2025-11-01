@@ -9,7 +9,7 @@ import numpy as np
 import requests
 import streamlit as st
 from gtts import gTTS
-
+from bs4 import BeautifulSoup
 # Prefer joblib to load sklearn models; fallback if absent
 try:
     import joblib
