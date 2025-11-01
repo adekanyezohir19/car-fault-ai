@@ -283,6 +283,18 @@ if uploaded is not None:
 
 else:
     st.info("Upload a sound file above to analyze vehicle components (engine, gearbox, brake, clutch, battery, wiring...).")
+    # ================== AUTO_DB for Google Drive ==================
+# Replace YOUR_FILE_ID_HERE with the shareable file ID from Google Drive
+AUTO_DB = {
+    "Engine":   "https://drive.google.com/uc?id=YOUR_ENGINE_FILE_ID",
+    "Brake":    "https://drive.google.com/uc?id=YOUR_BRAKE_FILE_ID",
+    "Gearbox":  "https://drive.google.com/uc?id=YOUR_GEARBOX_FILE_ID",
+    "Clutch":   "https://drive.google.com/uc?id=YOUR_CLUTCH_FILE_ID",
+    "Exhaust":  "https://drive.google.com/uc?id=YOUR_EXHAUST_FILE_ID",
+    "Fan_Belt": "https://drive.google.com/uc?id=YOUR_FAN_BELT_FILE_ID",
+    "Battery":  "https://drive.google.com/uc?id=YOUR_BATTERY_FILE_ID",
+    "Wiring":   "https://drive.google.com/uc?id=YOUR_WIRING_FILE_ID",
+}
 
 # -------------------------
 # Footer with your name
