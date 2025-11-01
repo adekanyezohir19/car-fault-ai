@@ -60,7 +60,58 @@ model_name = st.sidebar.text_input("Model (e.g. Hilux, T-90)", "")
 vtype = st.sidebar.selectbox("Vehicle Type", ["Car", "Truck", "Armored Tank"])
 st.sidebar.markdown("---")
 st.sidebar.write("Tip: to improve accuracy upload multiple labeled sounds to train a model and place `model/car_fault_model.pkl` in the repo.")
+# ------------------------------------------------
+# STEP 2 — PREPARE FOLDERS AND DOWNLOAD DATASETS
+# ------------------------------------------------
+components = [
+    "engine", "gearbox", "exhaust", "radiator",
+    "brake", "suspension", "battery", "wiring"
+]
 
+for comp in components:
+    os.makedirs(f"data/{comp}", exist_ok=True)
+
+dataset_links = {
+    "engine": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/1-30226-A-0.wav",
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/2-100032-A-11.wav"
+    ],
+    "gearbox": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/2-14713-A-10.wav"
+    ],
+    "exhaust": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/3-146129-A-4.wav"
+    ],
+    "brake": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/4-18995-A-1.wav"
+    ],
+    "radiator": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/1-19898-A-5.wav"
+    ],
+    "battery": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/2-143230-A-7.wav"
+    ],
+    "suspension": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/3-157459-A-8.wav"
+    ],
+    "wiring": [
+        "https://github.com/karoldvl/ESC-50/raw/master/audio/4-158972-A-9.wav"
+    ],
+}
+
+def download_datasets():
+    st.info("📦 Checking car sound dataset...")
+    for comp, urls in dataset_links.items():
+        for i, url in enumerate(urls):
+            filename = f"data/{comp}/{comp}_{i+1}.wav"
+            if not os.path.exists(filename):
+                st.write(f"⬇️ Downloading {comp} sound sample...")
+                r = requests.get(url)
+                with open(filename, "wb") as f:
+                    f.write(r.content)
+    st.success("✅ All sound samples ready!")
+
+download_datasets()
 # -------------------------
 # Upload area (main)
 # -------------------------
