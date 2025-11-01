@@ -200,13 +200,7 @@ def extract_features(file_path):
 # -------------------------
 st.header("🎵 Upload Vehicle Sound")
 uploaded = st.file_uploader("Upload a sound file (.wav, .mp3, .mp4). Keep recording quiet and close to engine.", type=["wav", "mp3", "mp4"])
-# ==========================================
-# 5️⃣ EVALUATE PERFORMANCE
-# ==========================================
-y_pred = model.predict(X_test)
-acc = accuracy_score(y_test, y_pred)
-print(f"\n✅ Model Accuracy: {acc*100:.2f}%\n")
-print("📊 Classification Report:\n", classification_report(y_test, y_pred))
+
 # -------------------------
 # Utility: feature extraction
 # -------------------------
