@@ -1,0 +1,6 @@
+from google.colab import drive
+drive.mount('/content/drive')
+
+!mkdir -p /content/drive/MyDrive/car_fault_ai
+!cp car_fault_model.pkl /content/drive/MyDrive/car_fault_ai/
+print("✅ Model saved to your Google Drive in car_fault_ai folder.")
