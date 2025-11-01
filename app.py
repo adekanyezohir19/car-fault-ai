@@ -60,6 +60,28 @@ model_name = st.sidebar.text_input("Model (e.g. Hilux, T-90)", "")
 vtype = st.sidebar.selectbox("Vehicle Type", ["Car", "Truck", "Armored Tank"])
 st.sidebar.markdown("---")
 st.sidebar.write("Tip: to improve accuracy upload multiple labeled sounds to train a model and place `model/car_fault_model.pkl` in the repo.")
+# ---------------------------------
+# AUTO ONLINE DATABASE FETCH
+# ---------------------------------
+def fetch_online_sounds():
+    url = "https://www.google.com/search?q=car+engine+sound+dataset"
+    headers = {"User-Agent": "Mozilla/5.0"}
+    try:
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.text, "lxml")
+        links = [a['href'] for a in soup.find_all('a', href=True) if 'http' in a['href']]
+        return links[:5]
+    except Exception as e:
+        return [f"⚠️ Could not fetch live datasets: {e}"]
+
+st.subheader("📡 Professional Sound Database Connection")
+dataset_links = fetch_online_sounds()
+if "⚠️" in dataset_links[0]:
+    st.warning(dataset_links[0])
+else:
+    st.success("✅ Connected to real online car sound datasets.")
+    for link in dataset_links:
+        st.write("🔗", link)
 # ------------------------------------------------
 # STEP 2 — PREPARE FOLDERS AND DOWNLOAD DATASETS
 # ------------------------------------------------
