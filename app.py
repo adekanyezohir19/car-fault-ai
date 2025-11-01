@@ -207,13 +207,6 @@ y_pred = model.predict(X_test)
 acc = accuracy_score(y_test, y_pred)
 print(f"\n✅ Model Accuracy: {acc*100:.2f}%\n")
 print("📊 Classification Report:\n", classification_report(y_test, y_pred))
-
-# ==========================================
-# 6️⃣ SAVE MODEL
-# ==========================================
-model_filename = "car_fault_model.pkl"
-joblib.dump(model, model_filename)
-print(f"💾 Model saved as {model_filename}")
 # -------------------------
 # Utility: feature extraction
 # -------------------------
