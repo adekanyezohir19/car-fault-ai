@@ -40,8 +40,8 @@ st.markdown("<div class='title'>🚔 Military Vehicle Fault Detection System</di
 st.markdown("<div class='subtitle'>Real-time sound-based diagnosis — Developed by <b>Adekanye Abdulzohir</b></div>", unsafe_allow_html=True)
 st.write(" ")
 
-# dashboard image - put `military-car-dashboard.jpg` in repo root or change the URL below
-IMAGE_PATH = "military-car-dashboard.jpg"
+# dashboard image - put `military_car.jpg` in repo root or change the URL below
+IMAGE_PATH = "military_car.jpg"
 if os.path.exists(IMAGE_PATH):
     st.image(IMAGE_PATH, use_container_width=True, caption="Military Diagnostic Dashboard")
 else:
