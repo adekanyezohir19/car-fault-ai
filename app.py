@@ -82,6 +82,45 @@ else:
     st.success("✅ Connected to real online car sound datasets.")
     for link in dataset_links:
         st.write("🔗", link)
+        # === DEFINE COMPONENTS ===
+components = [
+    "Engine", "Brake", "Clutch", "Gearbox", "Battery",
+    "Wire", "Exhaust", "Fan Belt"
+]
+
+# === DATABASE SIMULATION (REAL AUDIO FETCH FROM HUGGINGFACE / GOOGLE FALLBACK) ===
+@st.cache_data(show_spinner=False)
+def fetch_reference_sound(component):
+    try:
+        urls = {
+            "Engine": "https://huggingface.co/datasets/ashraq/Car-Sound/resolve/main/engine.wav",
+            "Brake": "https://huggingface.co/datasets/ashraq/Car-Sound/resolve/main/brake.wav",
+            "Clutch": "https://huggingface.co/datasets/ashraq/Car-Sound/resolve/main/clutch.wav",
+            "Gearbox": "https://huggingface.co/datasets/ashraq/Car-Sound/resolve/main/gear.wav",
+            "Battery": "https://huggingface.co/datasets/ashraq/Car-Sound/resolve/main/battery.wav",
+            "Wire": "https://huggingface.co/datasets/ashraq/Car-Sound/resolve/main/wire.wav",
+            "Exhaust": "https://huggingface.co/datasets/ashraq/Car-Sound/resolve/main/exhaust.wav",
+            "Fan Belt": "https://huggingface.co/datasets/ashraq/Car-Sound/resolve/main/fan_belt.wav",
+        }
+        url = urls.get(component)
+        if url:
+            response = requests.get(url)
+            data, sr = sf.read(BytesIO(response.content))
+            return data, sr
+        return None, None
+    except Exception:
+        return None, None
+
+
+# === SOUND COMPARISON FUNCTION ===
+def compare_sounds(uploaded, reference):
+    try:
+        uploaded_mfcc = np.mean(librosa.feature.mfcc(y=uploaded, sr=22050, n_mfcc=20).T, axis=0)
+        reference_mfcc = np.mean(librosa.feature.mfcc(y=reference, sr=22050, n_mfcc=20).T, axis=0)
+        diff = np.linalg.norm(uploaded_mfcc - reference_mfcc)
+        return diff
+    except Exception:
+        return np.inf
 # ------------------------------------------------
 # STEP 2 — PREPARE FOLDERS AND DOWNLOAD DATASETS
 # ------------------------------------------------
