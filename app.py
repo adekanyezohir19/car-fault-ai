@@ -6,6 +6,7 @@ import os
 import io
 import tempfile
 import numpy as np
+import requests
 import streamlit as st
 from gtts import gTTS
 
