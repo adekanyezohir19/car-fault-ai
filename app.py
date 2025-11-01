@@ -112,6 +112,27 @@ def download_datasets():
     st.success("✅ All sound samples ready!")
 
 download_datasets()
+# 📡 Fetch Real Sound Database
+def get_online_car_sounds(make, model):
+    """Fetch real car sound dataset links automatically (simulated web scrape)"""
+    try:
+        search_url = f"https://www.google.com/search?q={make}+{model}+engine+sound+site:kaggle.com+OR+site:github.com"
+        headers = {"User-Agent": "Mozilla/5.0"}
+        r = requests.get(search_url, headers=headers, timeout=10)
+        soup = BeautifulSoup(r.text, "html.parser")
+        links = [a['href'] for a in soup.find_all('a', href=True) if 'http' in a['href']]
+        dataset_links = [l for l in links if 'kaggle' in l or 'github' in l]
+        return dataset_links[:5]
+    except:
+        return []
+
+# 🧠 Extract Audio Features
+def extract_features(file_path):
+    y, sr = librosa.load(file_path, sr=None)
+    mfcc = np.mean(librosa.feature.mfcc(y=y, sr=sr), axis=1)
+    rms = np.mean(librosa.feature.rms(y=y))
+    zcr = np.mean(librosa.feature.zero_crossing_rate(y))
+    return np.concatenate(([rms, zcr], mfcc))
 # -------------------------
 # Upload area (main)
 # -------------------------
