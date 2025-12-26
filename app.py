@@ -1,8 +1,6 @@
 # app.py
 # Military Vehicle Fault AI Dashboard
-# Developed by Adekanye Abdulzohir
-
-import os
+st.markdown("**Developed by Adekanye Abdulzohir**")importloped os
 import io
 import tempfile
 import numpy as np
